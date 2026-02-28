@@ -410,10 +410,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500' as const,
     color: colors.textSecondary,
+    fontFamily: fonts.dmSansMedium,
   },
   huntTypeTextSelected: {
     color: colors.primary,
     fontWeight: '600' as const,
+    fontFamily: fonts.dmSansSemiBold,
   },
   dateButton: {
     flexDirection: 'row' as const,
@@ -430,6 +432,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 17,
     color: colors.text,
+    fontFamily: fonts.dmSans,
   },
   dateButtonPlaceholder: {
     color: colors.textTertiary,
@@ -442,6 +445,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
     fontWeight: '500' as const,
+    fontFamily: fonts.dmSansMedium,
   },
   footer: {
     paddingTop: 12,
@@ -519,6 +523,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: colors.textSecondary,
+    fontFamily: fonts.dmSansSemiBold,
   },
   yearChipTextSelected: {
     color: colors.primary,
@@ -544,10 +549,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500' as const,
     color: colors.textSecondary,
+    fontFamily: fonts.dmSansMedium,
   },
   monthChipTextSelected: {
     color: colors.primary,
     fontWeight: '600' as const,
+    fontFamily: fonts.dmSansSemiBold,
   },
   dayScroll: {
     maxHeight: 160,
@@ -572,10 +579,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500' as const,
     color: colors.textSecondary,
+    fontFamily: fonts.dmSansMedium,
   },
   dayChipTextSelected: {
     color: colors.textInverse,
     fontWeight: '600' as const,
+    fontFamily: fonts.dmSansSemiBold,
   },
   modalDoneButton: {
     backgroundColor: colors.primary,

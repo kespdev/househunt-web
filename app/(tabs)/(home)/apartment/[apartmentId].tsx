@@ -338,6 +338,7 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontSize: 12,
     fontWeight: '500',
+    fontFamily: fonts.dmSansMedium,
   },
   content: {
     padding: 20,
@@ -394,6 +395,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: colors.primary,
+    fontFamily: fonts.dmSansMedium,
   },
   tagsContainer: {
     flexDirection: 'row',

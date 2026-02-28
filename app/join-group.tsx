@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     fontSize: 24,
     fontWeight: '600' as const,
+    fontFamily: fonts.dmSansSemiBold,
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
@@ -196,5 +197,6 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontSize: 17,
     fontWeight: '600' as const,
+    fontFamily: fonts.dmSansSemiBold,
   },
 });

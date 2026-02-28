@@ -177,6 +177,7 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontSize: 32,
     fontWeight: '600',
+    fontFamily: fonts.dmSansSemiBold,
   },
   name: {
     fontSize: 22,
@@ -212,6 +213,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
     marginBottom: 4,
+    fontFamily: fonts.dmSansBold,
   },
   statLabel: {
     fontSize: 13,
@@ -272,6 +274,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: colors.error,
+    fontFamily: fonts.dmSansMedium,
   },
   version: {
     fontSize: 12,

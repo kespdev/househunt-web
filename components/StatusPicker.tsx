@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { ApartmentStatus } from '@/types';
 import colors from '@/constants/colors';
+import { fonts } from '@/constants/fonts';
 
 interface StatusPickerProps {
   currentStatus: ApartmentStatus;
@@ -72,6 +73,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: colors.textSecondary,
+    fontFamily: fonts.dmSansMedium,
   },
   chipTextSelected: {
     color: colors.textInverse,

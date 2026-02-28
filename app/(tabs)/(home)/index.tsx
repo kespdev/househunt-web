@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: '800' as const,
+    fontWeight: '700' as const,
     color: colors.text,
     fontFamily: fonts.dmSansBold,
     letterSpacing: -0.3,
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 12,
-    fontWeight: '700' as const,
+    fontWeight: '600' as const,
     color: colors.textTertiary,
     letterSpacing: 1,
     paddingHorizontal: 20,
@@ -538,6 +538,7 @@ const styles = StyleSheet.create({
   huntCardBadgeText: {
     fontSize: 11,
     fontWeight: '700' as const,
+    fontFamily: fonts.dmSansBold,
   },
   huntCardBadgeTextActive: {
     color: colors.primary,

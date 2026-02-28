@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontSize: 16,
-    fontWeight: '600' as const,
+    fontWeight: '600',
     color: colors.text,
     marginBottom: 2,
     fontFamily: fonts.dmSansSemiBold,
@@ -238,6 +238,7 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
     color: colors.text,
     marginBottom: 2,
+    fontFamily: fonts.dmSansMedium,
   },
   listingPrice: {
     fontSize: 13,
@@ -254,6 +255,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textSecondary,
     fontWeight: '500' as const,
+    fontFamily: fonts.dmSansMedium,
   },
   backButton: {
     alignSelf: 'center',
@@ -265,5 +267,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.primary,
     fontWeight: '500' as const,
+    fontFamily: fonts.dmSansMedium,
   },
 });

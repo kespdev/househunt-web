@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { Note, User } from '@/types';
 import colors from '@/constants/colors';
+import { fonts } from '@/constants/fonts';
 
 interface NoteCardProps {
   note: Note;
@@ -79,6 +80,7 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: fonts.dmSansSemiBold,
   },
   headerText: {
     flex: 1,
@@ -87,6 +89,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
+    fontFamily: fonts.dmSansSemiBold,
   },
   date: {
     fontSize: 12,

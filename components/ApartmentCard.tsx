@@ -176,6 +176,7 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontSize: 12,
     fontWeight: '600',
+    fontFamily: fonts.dmSansSemiBold,
   },
   userRatingBadge: {
     position: 'absolute',
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 22,
-    fontWeight: '700' as const,
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 6,
     fontFamily: fonts.dmSansBold,
@@ -246,6 +247,7 @@ const styles = StyleSheet.create({
   ratingCount: {
     fontSize: 12,
     fontWeight: '600',
+    fontFamily: fonts.dmSansSemiBold,
   },
   notesCount: {
     fontSize: 12,

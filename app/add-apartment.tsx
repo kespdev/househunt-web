@@ -761,6 +761,7 @@ const styles = StyleSheet.create({
   extractionText: {
     fontSize: 13,
     fontWeight: '500',
+    fontFamily: fonts.dmSansMedium,
     flex: 1,
   },
   addFieldRow: {
@@ -815,5 +816,6 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
     fontSize: 17,
     fontWeight: '600',
+    fontFamily: fonts.dmSansSemiBold,
   },
 });

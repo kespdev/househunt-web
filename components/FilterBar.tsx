@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'r
 import { SlidersHorizontal, ChevronDown } from 'lucide-react-native';
 import { FilterStatus, SortOption } from '@/types';
 import colors from '@/constants/colors';
+import { fonts } from '@/constants/fonts';
 
 interface FilterBarProps {
   statusFilter: FilterStatus;
@@ -96,5 +97,6 @@ const styles = StyleSheet.create({
   filterTextActive: {
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fonts.dmSansMedium,
   },
 });

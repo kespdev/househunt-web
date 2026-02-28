@@ -442,6 +442,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
     fontWeight: '500' as const,
+    fontFamily: fonts.dmSansMedium,
     flex: 1,
   },
   statusChip: {
@@ -468,11 +469,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600' as const,
     color: colors.primary,
+    fontFamily: fonts.dmSansSemiBold,
   },
   statusChipCompletedText: {
     fontSize: 13,
     fontWeight: '500' as const,
     color: colors.textSecondary,
+    fontFamily: fonts.dmSansMedium,
   },
   actionRow: {
     flexDirection: 'row',
@@ -496,6 +499,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500' as const,
     color: colors.primary,
+    fontFamily: fonts.dmSansMedium,
   },
   scrollView: {
     flex: 1,
@@ -547,6 +551,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500' as const,
     color: colors.textInverse,
+    fontFamily: fonts.dmSansMedium,
     flex: 1,
   },
   modalOverlay: {
@@ -589,6 +594,7 @@ const styles = StyleSheet.create({
   modalOptionTextSelected: {
     color: colors.primary,
     fontWeight: '500' as const,
+    fontFamily: fonts.dmSansMedium,
   },
   shareDescription: {
     fontSize: 14,
@@ -609,6 +615,7 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: colors.text,
     letterSpacing: 2,
+    fontFamily: fonts.dmSansBold,
   },
   copyButton: {
     padding: 8,
