@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mail, LogOut, Info, Shield, Bell, ChevronRight } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import colors from '@/constants/colors';
 import { fonts } from '@/constants/fonts';
 
@@ -19,6 +20,7 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const isSmall = width < 380;
   const isWide = width >= 768;
+  const { signOut } = useAuth();
   const { currentUser, getUserGroups } = useApp();
   const userGroups = getUserGroups();
   const activeHunts = userGroups.filter((g) => g.status === 'active');
@@ -30,7 +32,7 @@ export default function ProfileScreen() {
       'Are you sure you want to sign out?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign Out', style: 'destructive', onPress: () => {} },
+        { text: 'Sign Out', style: 'destructive', onPress: () => signOut() },
       ]
     );
   };

@@ -25,6 +25,14 @@ import {
   Tag as TagIcon,
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  useApartment,
+  useApartmentRatings,
+  useApartmentNotes,
+  useRealtimeRatings,
+  useRealtimeNotes,
+} from '@/hooks/useSupabaseQueries';
 import RatingButton from '@/components/RatingButton';
 import StatusPicker from '@/components/StatusPicker';
 import NoteCard from '@/components/NoteCard';
@@ -35,7 +43,8 @@ import { fonts } from '@/constants/fonts';
 
 export default function ApartmentDetailScreen() {
   const { apartmentId } = useLocalSearchParams<{ apartmentId: string }>();
-  const { getApartmentById, addOrUpdateRating, updateApartmentStatus, addNote, getUserById } = useApp();
+  const { addOrUpdateRating, updateApartmentStatus, addNote, getUserById } = useApp();
+  const { profile } = useAuth();
   const { width } = useWindowDimensions();
   const isSmall = width < 380;
   const isWide = width >= 768;
@@ -45,7 +54,23 @@ export default function ApartmentDetailScreen() {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const apartment = useMemo(() => getApartmentById(apartmentId || ''), [apartmentId, getApartmentById]);
+  const { data: apartmentData } = useApartment(apartmentId || undefined);
+  const { data: ratings = [] } = useApartmentRatings(apartmentId || undefined);
+  const { data: notes = [] } = useApartmentNotes(apartmentId || undefined);
+  useRealtimeRatings(apartmentId || undefined);
+  useRealtimeNotes(apartmentId || undefined);
+
+  const apartment = useMemo(() => {
+    if (!apartmentData) return undefined;
+    const userRating = ratings.find((r) => r.userId === profile?.id);
+    return {
+      ...apartmentData,
+      ratings,
+      notes,
+      averageRating: 0,
+      userRating,
+    };
+  }, [apartmentData, ratings, notes, profile?.id]);
 
   const handleRating = async (value: RatingValue) => {
     if (!apartment) return;

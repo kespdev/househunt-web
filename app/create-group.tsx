@@ -79,20 +79,22 @@ export default function CreateHuntScreen() {
     setIsSubmitting(true);
     try {
       const newHunt = await createGroup(huntName.trim(), moveDateISO, moveExactDateISO, huntType);
-      Alert.alert(
-        'Hunt Created!',
-        `Share this invite code with others:\n\n${newHunt.inviteCode}`,
-        [
-          {
-            text: 'Done',
-            onPress: () => {
-              router.back();
-            },
-          },
-        ]
-      );
+      if (Platform.OS === 'web') {
+        window.alert(`Hunt Created!\n\nShare this invite code with others:\n${newHunt.inviteCode}`);
+        router.replace('/');
+      } else {
+        Alert.alert(
+          'Hunt Created!',
+          `Share this invite code with others:\n\n${newHunt.inviteCode}`,
+          [{ text: 'Done', onPress: () => router.dismiss() }]
+        );
+      }
     } catch {
-      Alert.alert('Error', 'Failed to create hunt. Please try again.');
+      if (Platform.OS === 'web') {
+        window.alert('Failed to create hunt. Please try again.');
+      } else {
+        Alert.alert('Error', 'Failed to create hunt. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

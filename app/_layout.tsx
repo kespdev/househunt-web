@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, Redirect, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
-import { StatusBar } from "react-native";
+import { StatusBar, ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useFonts, DMSans_400Regular, DMSans_500Medium, DMSans_600SemiBold, DMSans_700Bold } from "@expo-google-fonts/dm-sans";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppProvider } from "@/contexts/AppContext";
 import colors from "@/constants/colors";
 
@@ -14,39 +15,69 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 
 const queryClient = new QueryClient();
 
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { session, isLoading } = useAuth();
+  const segments = useSegments();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const inAuthGroup = segments[0] === '(auth)';
+
+  if (!session && !inAuthGroup) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  if (session && inAuthGroup) {
+    return <Redirect href="/" />;
+  }
+
+  return <>{children}</>;
+}
+
 function RootLayoutNav() {
   return (
-    <Stack
-      screenOptions={{
-        headerBackTitle: "",
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
-        contentStyle: { backgroundColor: colors.background },
-      }}
-    >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="create-group"
-        options={{ presentation: "modal", headerShown: false }}
-      />
-      <Stack.Screen
-        name="join-group"
-        options={{ presentation: "modal", headerShown: false }}
-      />
-      <Stack.Screen
-        name="add-apartment"
-        options={{ presentation: "modal", headerShown: false }}
-      />
-      <Stack.Screen
-        name="hunt/[huntId]"
-        options={{
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.text,
-          headerShadowVisible: false,
-        }}
-      />
-      <Stack.Screen name="+not-found" />
-    </Stack>
+    <AuthGate>
+      <AppProvider>
+        <Stack
+          screenOptions={{
+            headerBackTitle: "",
+            headerStyle: { backgroundColor: colors.surface },
+            headerTintColor: colors.text,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="create-group"
+            options={{ presentation: "modal", headerShown: false }}
+          />
+          <Stack.Screen
+            name="join-group"
+            options={{ presentation: "modal", headerShown: false }}
+          />
+          <Stack.Screen
+            name="add-apartment"
+            options={{ presentation: "modal", headerShown: false }}
+          />
+          <Stack.Screen
+            name="hunt/[huntId]"
+            options={{
+              headerStyle: { backgroundColor: colors.surface },
+              headerTintColor: colors.text,
+              headerShadowVisible: false,
+            }}
+          />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </AppProvider>
+    </AuthGate>
   );
 }
 
@@ -80,9 +111,9 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar barStyle="dark-content" />
-        <AppProvider>
+        <AuthProvider>
           <RootLayoutNav />
-        </AppProvider>
+        </AuthProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
   );

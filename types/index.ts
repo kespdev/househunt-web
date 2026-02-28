@@ -72,6 +72,25 @@ export interface ApartmentWithMeta extends Apartment {
   userRating?: Rating;
 }
 
+export type NotificationType = 'new_listing';
+
+export interface Notification {
+  id: string;
+  recipientId: string;
+  groupId: string;
+  apartmentId: string | null;
+  actorId: string;
+  type: NotificationType;
+  read: boolean;
+  createdAt: string;
+  // Joined relations (populated by queries)
+  actorName?: string;
+  actorAvatar?: string;
+  groupName?: string;
+  apartmentAddress?: string;
+  apartmentPrice?: number;
+}
+
 export type SortOption = 'price_asc' | 'price_desc' | 'rating' | 'date_added';
 export type FilterStatus = ApartmentStatus | 'All';
 export type FilterInterest = RatingValue | 'All';

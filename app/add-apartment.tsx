@@ -391,9 +391,17 @@ export default function AddApartmentScreen() {
         listingSource: detectedSource,
         tags: tags.length > 0 ? tags : undefined,
       });
-      router.back();
+      if (Platform.OS === 'web') {
+        router.replace(`/hunt/${groupId}` as never);
+      } else {
+        router.back();
+      }
     } catch {
-      Alert.alert('Error', 'Failed to add apartment. Please try again.');
+      if (Platform.OS === 'web') {
+        window.alert('Failed to add apartment. Please try again.');
+      } else {
+        Alert.alert('Error', 'Failed to add apartment. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

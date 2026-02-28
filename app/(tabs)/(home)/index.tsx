@@ -20,6 +20,9 @@ import {
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications, useMarkNotificationRead } from '@/hooks/useSupabaseQueries';
+import NotificationCard from '@/components/NotificationCard';
 import { Group } from '@/types';
 import colors from '@/constants/colors';
 import { fonts } from '@/constants/fonts';
@@ -125,6 +128,9 @@ export default function HomeScreen() {
     getGroupMembers,
     isLoading,
   } = useApp();
+  const { profile } = useAuth();
+  const { data: notifications = [] } = useNotifications(profile?.id);
+  const markRead = useMarkNotificationRead(profile?.id ?? '');
 
   const userGroups = useMemo(() => getUserGroups(), [getUserGroups]);
 
@@ -161,6 +167,13 @@ export default function HomeScreen() {
 
   const handleHuntPress = (huntId: string) => {
     router.push(`/hunt/${huntId}` as never);
+  };
+
+  const handleNotificationPress = (notification: typeof notifications[0]) => {
+    markRead.mutate(notification.id);
+    if (notification.groupId) {
+      router.push(`/hunt/${notification.groupId}` as never);
+    }
   };
 
   if (isLoading) {
@@ -235,6 +248,19 @@ export default function HomeScreen() {
           contentContainerStyle={[styles.scrollContent, isWide && styles.scrollContentWide]}
           showsVerticalScrollIndicator={false}
         >
+          {notifications.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>NEW ACTIVITY</Text>
+              {notifications.map((n) => (
+                <NotificationCard
+                  key={n.id}
+                  notification={n}
+                  onPress={() => handleNotificationPress(n)}
+                />
+              ))}
+            </View>
+          )}
+
           {hasNoActive && completedHunts.length > 0 && (
             <TouchableOpacity
               style={styles.startNewBanner}

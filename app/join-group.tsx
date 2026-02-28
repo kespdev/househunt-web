@@ -35,17 +35,21 @@ export default function JoinHuntScreen() {
     setIsSubmitting(true);
     try {
       const hunt = await joinGroup(code);
-      Alert.alert('Success!', `You've joined "${hunt.name}"`, [
-        {
-          text: 'Done',
-          onPress: () => {
-            router.back();
-          },
-        },
-      ]);
+      if (Platform.OS === 'web') {
+        window.alert(`You've joined "${hunt.name}"`);
+        router.replace('/');
+      } else {
+        Alert.alert('Success!', `You've joined "${hunt.name}"`, [
+          { text: 'Done', onPress: () => router.back() },
+        ]);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to join hunt';
-      Alert.alert('Error', message);
+      if (Platform.OS === 'web') {
+        window.alert(message);
+      } else {
+        Alert.alert('Error', message);
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -23,11 +23,12 @@ import {
   Pencil,
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
+import { useGroupApartments, useGroupMembers, useRealtimeApartments } from '@/hooks/useSupabaseQueries';
 import ApartmentCard from '@/components/ApartmentCard';
 import FilterBar from '@/components/FilterBar';
 import EmptyState from '@/components/EmptyState';
 import HuntCompletionModal from '@/components/HuntCompletionModal';
-import { FilterStatus, SortOption, CompletionReason } from '@/types';
+import { FilterStatus, SortOption, CompletionReason, ApartmentWithMeta } from '@/types';
 import colors from '@/constants/colors';
 import { fonts } from '@/constants/fonts';
 import * as Clipboard from 'expo-clipboard';
@@ -67,8 +68,23 @@ export default function HuntDetailScreen() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const hunt = useMemo(() => getGroupById(huntId || ''), [huntId, getGroupById]);
-  const members = useMemo(() => getGroupMembers(huntId || ''), [huntId, getGroupMembers]);
-  const apartments = useMemo(() => getGroupApartments(huntId || ''), [huntId, getGroupApartments]);
+
+  // Use React Query hooks directly for live data
+  const { data: membersData = [] } = useGroupMembers(huntId || undefined);
+  const { data: apartmentsRaw = [] } = useGroupApartments(huntId || undefined);
+  useRealtimeApartments(huntId || undefined);
+
+  const members = membersData;
+  const apartments: ApartmentWithMeta[] = useMemo(
+    () => apartmentsRaw.map((apt) => ({
+      ...apt,
+      ratings: [],
+      notes: [],
+      averageRating: 0,
+      userRating: undefined,
+    })),
+    [apartmentsRaw]
+  );
 
   const isActive = hunt?.status === 'active';
 
