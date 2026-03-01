@@ -354,7 +354,7 @@ export async function addApartment(
       tags: data.tags ?? null,
     });
 
-  if (error) throw error;
+  if (error) throw new Error(`${error.message} (${error.code}: ${error.details})`);
 
   // Return a constructed apartment (real data will be fetched via query invalidation)
   return {

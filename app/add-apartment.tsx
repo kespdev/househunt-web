@@ -278,14 +278,14 @@ export default function AddApartmentScreen() {
 
   const handleExtractMetadata = useCallback(async () => {
     if (!sourceUrl.trim()) {
-      Alert.alert('Enter URL', 'Please paste a listing URL first');
+      showError('Please paste a listing URL first');
       return;
     }
 
     try {
       new URL(sourceUrl);
     } catch {
-      Alert.alert('Invalid URL', 'Please enter a valid URL');
+      showError('Please enter a valid URL');
       return;
     }
 
@@ -343,37 +343,45 @@ export default function AddApartmentScreen() {
     }
   }, [sourceUrl]);
 
+  const showError = (message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(message);
+    } else {
+      Alert.alert('Error', message);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!groupId) {
-      Alert.alert('Error', 'No group selected');
+      showError('No group selected');
       return;
     }
 
     if (!sourceUrl.trim()) {
-      Alert.alert('Error', 'Please enter a listing URL');
+      showError('Please enter a listing URL');
       return;
     }
 
     if (!address.trim()) {
-      Alert.alert('Error', 'Please enter an address');
+      showError('Please enter an address');
       return;
     }
 
     const priceNum = parseInt(price, 10);
     if (isNaN(priceNum) || priceNum <= 0) {
-      Alert.alert('Error', 'Please enter a valid price');
+      showError('Please enter a valid price');
       return;
     }
 
     const bedroomsNum = parseInt(bedrooms, 10);
     if (isNaN(bedroomsNum) || bedroomsNum < 0) {
-      Alert.alert('Error', 'Please enter a valid number of bedrooms');
+      showError('Please enter a valid number of bedrooms');
       return;
     }
 
     const bathroomsNum = parseFloat(bathrooms);
     if (isNaN(bathroomsNum) || bathroomsNum < 0) {
-      Alert.alert('Error', 'Please enter a valid number of bathrooms');
+      showError('Please enter a valid number of bathrooms');
       return;
     }
 
@@ -396,11 +404,13 @@ export default function AddApartmentScreen() {
       } else {
         router.back();
       }
-    } catch {
+    } catch (error: any) {
+      const message = error?.message || JSON.stringify(error);
+      console.error('Add apartment error:', JSON.stringify(error, null, 2));
       if (Platform.OS === 'web') {
-        window.alert('Failed to add apartment. Please try again.');
+        window.alert(`Failed to add apartment: ${message}`);
       } else {
-        Alert.alert('Error', 'Failed to add apartment. Please try again.');
+        Alert.alert('Error', `Failed to add apartment: ${message}`);
       }
     } finally {
       setIsSubmitting(false);
