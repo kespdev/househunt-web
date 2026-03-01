@@ -299,14 +299,15 @@ export async function joinGroupByInviteCode(
   const group = await fetchGroupByInviteCode(inviteCode);
   if (!group) throw new Error('Invalid invite code');
 
-  // Check if already a member
-  const { data: existing } = await supabase
+  // Check if already a member (use maybeSingle to avoid error on 0 rows)
+  const { data: existing, error: checkError } = await supabase
     .from('group_members')
     .select('user_id')
     .eq('group_id', group.id)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
+  if (checkError) throw checkError;
   if (existing) throw new Error('Already a member of this hunt');
 
   const { error } = await supabase

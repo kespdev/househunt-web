@@ -24,41 +24,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const init = async () => {
-      // On web, check if we're returning from an OAuth redirect with tokens in the hash
-      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.hash) {
-        const params = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-
-        if (accessToken && refreshToken) {
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          // Clean up the URL hash
-          window.history.replaceState(null, '', window.location.pathname);
-
-          if (data.session) {
-            setSession(data.session);
-            await fetchProfile(data.session.user.id);
-            return;
-          }
-        }
+    // Clean up OAuth hash fragment from URL (Supabase reads it automatically via detectSessionInUrl)
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.hash) {
+      const params = new URLSearchParams(window.location.hash.substring(1));
+      if (params.get('access_token')) {
+        window.history.replaceState(null, '', window.location.pathname);
       }
-
-      // Normal session check
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      } else {
-        setIsLoading(false);
-      }
-    };
-
-    init();
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -71,6 +43,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setIsLoading(false);
+      }
+    }).catch(() => {
+      setIsLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
