@@ -12,7 +12,7 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import {
   Bed,
   Bath,
@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Tag as TagIcon,
+  Pencil,
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +43,7 @@ import colors from '@/constants/colors';
 import { fonts } from '@/constants/fonts';
 
 export default function ApartmentDetailScreen() {
+  const router = useRouter();
   const { apartmentId } = useLocalSearchParams<{ apartmentId: string }>();
   const { addOrUpdateRating, updateApartmentStatus, addNote, getUserById } = useApp();
   const { profile } = useAuth();
@@ -135,7 +137,19 @@ export default function ApartmentDetailScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={100}
     >
-      <Stack.Screen options={{ title: apartment.address.split(',')[0] }} />
+      <Stack.Screen
+        options={{
+          title: apartment.address.split(',')[0],
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push(`/edit-apartment?apartmentId=${apartment.id}` as never)}
+              style={styles.headerButton}
+            >
+              <Pencil size={20} color={colors.primary} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
 
       <ScrollView
         style={styles.scrollView}
@@ -405,6 +419,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textSecondary,
     lineHeight: 22,
+  },
+  headerButton: {
+    padding: 8,
   },
   listingButton: {
     flexDirection: 'row',

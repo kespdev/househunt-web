@@ -375,6 +375,38 @@ export async function addApartment(
   };
 }
 
+export async function updateApartment(
+  apartmentId: string,
+  data: {
+    sourceUrl: string;
+    address: string;
+    price: number;
+    bedrooms: number;
+    bathrooms: number;
+    squareFootage?: number;
+    photos?: string[];
+    listingSource: string;
+    tags?: string[];
+  }
+): Promise<void> {
+  const { error } = await supabase
+    .from('apartments')
+    .update({
+      source_url: data.sourceUrl,
+      address: data.address,
+      price: data.price,
+      bedrooms: data.bedrooms,
+      bathrooms: data.bathrooms,
+      square_footage: data.squareFootage ?? null,
+      photos: data.photos ?? [],
+      listing_source: data.listingSource,
+      tags: data.tags ?? null,
+    })
+    .eq('id', apartmentId);
+
+  if (error) throw new Error(`${error.message} (${error.code}: ${error.details})`);
+}
+
 export async function updateApartmentStatus(
   apartmentId: string,
   status: ApartmentStatus

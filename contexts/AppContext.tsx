@@ -106,6 +106,28 @@ export const [AppProvider, useApp] = createContextHook(() => {
     [userId, queryClient]
   );
 
+  const updateApartment = useCallback(
+    async (
+      apartmentId: string,
+      data: {
+        sourceUrl: string;
+        address: string;
+        price: number;
+        bedrooms: number;
+        bathrooms: number;
+        squareFootage?: number;
+        photos?: string[];
+        listingSource: string;
+        tags?: string[];
+      }
+    ) => {
+      await db.updateApartment(apartmentId, data);
+      queryClient.invalidateQueries({ queryKey: queryKeys.apartment(apartmentId) });
+      queryClient.invalidateQueries({ queryKey: ['groupApartments'] });
+    },
+    [queryClient]
+  );
+
   const updateApartmentStatus = useCallback(
     async (apartmentId: string, status: ApartmentStatus) => {
       await db.updateApartmentStatus(apartmentId, status);
@@ -272,6 +294,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
     createGroup,
     joinGroup,
     addApartment,
+    updateApartment,
     updateApartmentStatus,
     completeHunt,
     reactivateHunt,

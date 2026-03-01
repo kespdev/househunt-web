@@ -67,6 +67,10 @@ function RootLayoutNav() {
             options={{ presentation: "modal", headerShown: false }}
           />
           <Stack.Screen
+            name="edit-apartment"
+            options={{ presentation: "modal", headerShown: false }}
+          />
+          <Stack.Screen
             name="hunt/[huntId]"
             options={{
               headerStyle: { backgroundColor: colors.surface },
