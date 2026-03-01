@@ -45,8 +45,146 @@ const extractListingSource = (url: string): string => {
   }
 };
 
+const SCHEMA_TYPES = [
+  'Apartment', 'Residence', 'SingleFamilyResidence', 'House',
+  'RealEstateListing', 'Product', 'Place',
+];
+
+const extractFromJsonLd = (html: string): ExtractedMetadata => {
+  const metadata: ExtractedMetadata = {};
+
+  // Collect all JSON-LD objects
+  const objects: any[] = [];
+
+  // Parse <script type="application/ld+json"> blocks
+  const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let jsonLdMatch;
+  while ((jsonLdMatch = jsonLdRegex.exec(html)) !== null) {
+    try {
+      const parsed = JSON.parse(jsonLdMatch[1]);
+      if (Array.isArray(parsed)) {
+        objects.push(...parsed);
+      } else {
+        objects.push(parsed);
+      }
+    } catch {
+      // Skip malformed JSON
+    }
+  }
+
+  // Also try Zillow's __NEXT_DATA__ script
+  const nextDataMatch = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (nextDataMatch) {
+    try {
+      const nextData = JSON.parse(nextDataMatch[1]);
+      const props = nextData?.props?.pageProps;
+      if (props) {
+        // Zillow nests listing data in various places
+        const listing = props.componentDetail || props.gdpClientCache && Object.values(JSON.parse(props.gdpClientCache))[0] as any;
+        if (listing) objects.push(listing);
+      }
+    } catch {
+      // Skip malformed JSON
+    }
+  }
+
+  // Handle @graph arrays (common in JSON-LD)
+  const flatObjects: any[] = [];
+  for (const obj of objects) {
+    if (obj?.['@graph'] && Array.isArray(obj['@graph'])) {
+      flatObjects.push(...obj['@graph']);
+    } else {
+      flatObjects.push(obj);
+    }
+  }
+
+  // Find a matching schema object
+  for (const obj of flatObjects) {
+    const type = obj?.['@type'];
+    const types = Array.isArray(type) ? type : [type];
+    const isRelevant = types.some((t: string) => SCHEMA_TYPES.includes(t));
+    if (!isRelevant) continue;
+
+    // Address
+    if (!metadata.address && obj.address) {
+      if (typeof obj.address === 'string') {
+        metadata.address = obj.address;
+      } else {
+        const parts = [
+          obj.address.streetAddress,
+          obj.address.addressLocality,
+          obj.address.addressRegion,
+        ].filter(Boolean);
+        if (parts.length > 0) metadata.address = parts.join(', ');
+      }
+    }
+
+    // Price
+    if (!metadata.price) {
+      const rawPrice = obj.offers?.price ?? obj.offers?.lowPrice ?? obj.price ?? obj.rent;
+      if (rawPrice != null) {
+        const p = typeof rawPrice === 'string' ? parseInt(rawPrice.replace(/[^0-9]/g, ''), 10) : Number(rawPrice);
+        if (!isNaN(p) && p > 0) metadata.price = p;
+      }
+    }
+
+    // Bedrooms
+    if (metadata.bedrooms === undefined) {
+      const beds = obj.numberOfBedrooms ?? obj.numberOfRooms;
+      if (beds != null) {
+        const b = Number(beds);
+        if (!isNaN(b) && b >= 0 && b <= 20) metadata.bedrooms = b;
+      }
+    }
+
+    // Bathrooms
+    if (metadata.bathrooms === undefined) {
+      const fullBaths = Number(obj.numberOfFullBathrooms ?? 0);
+      const partialBaths = Number(obj.numberOfPartialBathrooms ?? 0);
+      const totalBaths = obj.numberOfBathroomsTotal != null
+        ? Number(obj.numberOfBathroomsTotal)
+        : (obj.numberOfFullBathrooms != null || obj.numberOfPartialBathrooms != null)
+          ? fullBaths + partialBaths * 0.5
+          : undefined;
+      if (totalBaths !== undefined && !isNaN(totalBaths) && totalBaths >= 0) {
+        metadata.bathrooms = totalBaths;
+      }
+    }
+
+    // Square footage
+    if (!metadata.squareFootage) {
+      const floor = obj.floorSize;
+      if (floor) {
+        const val = typeof floor === 'object' ? Number(floor.value) : Number(floor);
+        if (!isNaN(val) && val >= 100 && val <= 50000) metadata.squareFootage = val;
+      }
+    }
+
+    // Photos
+    if (!metadata.photos) {
+      const photos: string[] = [];
+      const img = obj.image || obj.photo?.contentUrl;
+      if (typeof img === 'string') {
+        photos.push(img);
+      } else if (Array.isArray(img)) {
+        for (const i of img) {
+          const url = typeof i === 'string' ? i : i?.contentUrl || i?.url;
+          if (url) photos.push(url);
+        }
+      }
+      if (photos.length > 0) metadata.photos = photos.slice(0, 10);
+    }
+  }
+
+  return metadata;
+};
+
 const extractMetadataFromHtml = (html: string, url: string): ExtractedMetadata => {
+  // Try JSON-LD first for reliable structured data
+  const jsonLdData = extractFromJsonLd(html);
+
   const metadata: ExtractedMetadata = {
+    ...jsonLdData,
     listingSource: extractListingSource(url),
   };
 
@@ -72,98 +210,108 @@ const extractMetadataFromHtml = (html: string, url: string): ExtractedMetadata =
 
   const combinedText = [ogTitle, ogDescription, pageTitle].filter(Boolean).join(' ');
 
-  const pricePatterns = [
-    /\$([\d,]+)(?:\.\d{2})?(?:\s*\/\s*(?:mo|month|per month))?/gi,
-    /([\d,]+)(?:\.\d{2})?\s*(?:\/\s*)?(?:mo|month|per month)/gi,
-    /rent[:\s]*\$?([\d,]+)/gi,
-    /price[:\s]*\$?([\d,]+)/gi,
-  ];
+  if (!metadata.price) {
+    const pricePatterns = [
+      /\$([\d,]+)(?:\.\d{2})?(?:\s*\/\s*(?:mo|month|per month))?/gi,
+      /([\d,]+)(?:\.\d{2})?\s*(?:\/\s*)?(?:mo|month|per month)/gi,
+      /rent[:\s]*\$?([\d,]+)/gi,
+      /price[:\s]*\$?([\d,]+)/gi,
+    ];
 
-  for (const pattern of pricePatterns) {
-    const matches = combinedText.matchAll(pattern);
-    for (const match of matches) {
-      const priceStr = match[1].replace(/,/g, '');
-      const price = parseInt(priceStr, 10);
-      if (price >= 500 && price <= 20000) {
-        metadata.price = price;
-        break;
+    for (const pattern of pricePatterns) {
+      const matches = combinedText.matchAll(pattern);
+      for (const match of matches) {
+        const priceStr = match[1].replace(/,/g, '');
+        const price = parseInt(priceStr, 10);
+        if (price >= 500 && price <= 20000) {
+          metadata.price = price;
+          break;
+        }
       }
+      if (metadata.price) break;
     }
-    if (metadata.price) break;
   }
 
-  const bedroomPatterns = [
-    /(\d+)\s*(?:bed(?:room)?s?|br|bd)/gi,
-    /studio/gi,
-  ];
+  if (metadata.bedrooms === undefined) {
+    const bedroomPatterns = [
+      /(\d+)\s*(?:bed(?:room)?s?|br|bd)/gi,
+      /studio/gi,
+    ];
 
-  for (const pattern of bedroomPatterns) {
-    if (pattern.source === 'studio') {
-      if (combinedText.toLowerCase().includes('studio')) {
-        metadata.bedrooms = 0;
-        break;
+    for (const pattern of bedroomPatterns) {
+      if (pattern.source === 'studio') {
+        if (combinedText.toLowerCase().includes('studio')) {
+          metadata.bedrooms = 0;
+          break;
+        }
+      } else {
+        const match = combinedText.match(pattern);
+        if (match) {
+          const beds = parseInt(match[0], 10);
+          if (!isNaN(beds) && beds >= 0 && beds <= 10) {
+            metadata.bedrooms = beds;
+            break;
+          }
+        }
       }
-    } else {
+    }
+  }
+
+  if (metadata.bathrooms === undefined) {
+    const bathroomPatterns = [
+      /([\d.]+)\s*(?:bath(?:room)?s?|ba)/gi,
+    ];
+
+    for (const pattern of bathroomPatterns) {
       const match = combinedText.match(pattern);
       if (match) {
-        const beds = parseInt(match[0], 10);
-        if (!isNaN(beds) && beds >= 0 && beds <= 10) {
-          metadata.bedrooms = beds;
+        const baths = parseFloat(match[0]);
+        if (!isNaN(baths) && baths >= 0 && baths <= 10) {
+          metadata.bathrooms = baths;
           break;
         }
       }
     }
   }
 
-  const bathroomPatterns = [
-    /([\d.]+)\s*(?:bath(?:room)?s?|ba)/gi,
-  ];
+  if (!metadata.squareFootage) {
+    const sqftPatterns = [
+      /([\d,]+)\s*(?:sq\.?\s*ft\.?|sqft|square\s*feet)/gi,
+    ];
 
-  for (const pattern of bathroomPatterns) {
-    const match = combinedText.match(pattern);
-    if (match) {
-      const baths = parseFloat(match[0]);
-      if (!isNaN(baths) && baths >= 0 && baths <= 10) {
-        metadata.bathrooms = baths;
-        break;
-      }
-    }
-  }
-
-  const sqftPatterns = [
-    /([\d,]+)\s*(?:sq\.?\s*ft\.?|sqft|square\s*feet)/gi,
-  ];
-
-  for (const pattern of sqftPatterns) {
-    const match = combinedText.match(pattern);
-    if (match) {
-      const sqft = parseInt(match[0].replace(/,/g, ''), 10);
-      if (!isNaN(sqft) && sqft >= 100 && sqft <= 50000) {
-        metadata.squareFootage = sqft;
-        break;
-      }
-    }
-  }
-
-  const addressPatterns = [
-    /\d+\s+[\w\s]+(?:street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|way|court|ct|place|pl)[,\s]+[\w\s]+,?\s*[A-Z]{2}(?:\s+\d{5})?/gi,
-  ];
-
-  const ogStreetAddress = getMetaContent('og:street-address');
-  const ogLocality = getMetaContent('og:locality');
-  const ogRegion = getMetaContent('og:region');
-
-  if (ogStreetAddress) {
-    let address = ogStreetAddress;
-    if (ogLocality) address += `, ${ogLocality}`;
-    if (ogRegion) address += `, ${ogRegion}`;
-    metadata.address = address;
-  } else {
-    for (const pattern of addressPatterns) {
+    for (const pattern of sqftPatterns) {
       const match = combinedText.match(pattern);
-      if (match && match[0]) {
-        metadata.address = match[0].trim();
-        break;
+      if (match) {
+        const sqft = parseInt(match[0].replace(/,/g, ''), 10);
+        if (!isNaN(sqft) && sqft >= 100 && sqft <= 50000) {
+          metadata.squareFootage = sqft;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!metadata.address) {
+    const addressPatterns = [
+      /\d+\s+[\w\s]+(?:street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|way|court|ct|place|pl)[,\s]+[\w\s]+,?\s*[A-Z]{2}(?:\s+\d{5})?/gi,
+    ];
+
+    const ogStreetAddress = getMetaContent('og:street-address');
+    const ogLocality = getMetaContent('og:locality');
+    const ogRegion = getMetaContent('og:region');
+
+    if (ogStreetAddress) {
+      let address = ogStreetAddress;
+      if (ogLocality) address += `, ${ogLocality}`;
+      if (ogRegion) address += `, ${ogRegion}`;
+      metadata.address = address;
+    } else {
+      for (const pattern of addressPatterns) {
+        const match = combinedText.match(pattern);
+        if (match && match[0]) {
+          metadata.address = match[0].trim();
+          break;
+        }
       }
     }
   }
@@ -175,29 +323,31 @@ const extractMetadataFromHtml = (html: string, url: string): ExtractedMetadata =
     }
   }
 
-  const photos: string[] = [];
-  if (ogImage) photos.push(ogImage);
-  if (twitterImage && twitterImage !== ogImage) photos.push(twitterImage);
+  if (!metadata.photos || metadata.photos.length === 0) {
+    const photos: string[] = [];
+    if (ogImage) photos.push(ogImage);
+    if (twitterImage && twitterImage !== ogImage) photos.push(twitterImage);
 
-  const imgMatches = html.matchAll(/<img[^>]*src=["']([^"']+)["'][^>]*/gi);
-  for (const match of imgMatches) {
-    const src = match[1];
-    if (src &&
-        !src.includes('logo') &&
-        !src.includes('icon') &&
-        !src.includes('avatar') &&
-        !src.includes('sprite') &&
-        (src.includes('http') || src.startsWith('//')) &&
-        photos.length < 8) {
-      const fullUrl = src.startsWith('//') ? `https:${src}` : src;
-      if (!photos.includes(fullUrl)) {
-        photos.push(fullUrl);
+    const imgMatches = html.matchAll(/<img[^>]*src=["']([^"']+)["'][^>]*/gi);
+    for (const match of imgMatches) {
+      const src = match[1];
+      if (src &&
+          !src.includes('logo') &&
+          !src.includes('icon') &&
+          !src.includes('avatar') &&
+          !src.includes('sprite') &&
+          (src.includes('http') || src.startsWith('//')) &&
+          photos.length < 8) {
+        const fullUrl = src.startsWith('//') ? `https:${src}` : src;
+        if (!photos.includes(fullUrl)) {
+          photos.push(fullUrl);
+        }
       }
     }
-  }
 
-  if (photos.length > 0) {
-    metadata.photos = photos;
+    if (photos.length > 0) {
+      metadata.photos = photos;
+    }
   }
 
   return metadata;
